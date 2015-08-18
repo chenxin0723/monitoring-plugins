@@ -152,6 +152,7 @@ main (int argc, char **argv)
 	int i = 0, j = 0;
 	int result = STATE_UNKNOWN;
 	int ret = 0;
+	int mem_rss = 0;
 	output chld_out, chld_err;
 
 	setlocale (LC_ALL, "");
@@ -190,7 +191,7 @@ main (int argc, char **argv)
 	(void) alarm ((unsigned) timeout_interval);
 
 	if (verbose >= 2)
-		printf (_("CMD: %s\n"), PS_COMMAND);
+	   printf (_("CMD: %s\n"), PS_COMMAND);
 
 	if (input_filename == NULL) {
 		result = cmd_run( PS_COMMAND, &chld_out, &chld_err, 0);
@@ -297,7 +298,7 @@ main (int argc, char **argv)
 					procpid, procppid, procpcpu, procstat, 
 					procetime, procprog, procargs);
 			}
-
+            mem_rss = procrss;
 			if (metric == METRIC_VSZ)
 				i = get_status ((double)procvsz, procs_thresholds);
 			else if (metric == METRIC_RSS)
@@ -344,31 +345,22 @@ main (int argc, char **argv)
 		printf ("%s %s: ", metric_name, _("OK"));
 	} else if (result == STATE_WARNING) {
 		printf ("%s %s: ", metric_name, _("WARNING"));
-		if ( metric != METRIC_PROCS ) {
-			printf (_("%d warn out of "), warn);
-		}
 	} else if (result == STATE_CRITICAL) {
 		printf ("%s %s: ", metric_name, _("CRITICAL"));
-		if (metric != METRIC_PROCS) {
-			printf (_("%d crit, %d warn out of "), crit, warn);
-		}
 	} 
-	printf (ngettext ("%d process", "%d processes", (unsigned long) procs), procs);
-	
-	if (strcmp(fmt,"") != 0) {
-		printf (_(" with %s"), fmt);
-	}
 
-	if ( verbose >= 1 && strcmp(fails,"") )
-		printf (" [%s]", fails);
-
-	if (metric == METRIC_PROCS)
+	if (metric == METRIC_PROCS){
+		printf (_(" %d processes"), procs);
 		printf (" | procs=%d;%s;%s;0;", procs,
 				warning_range ? warning_range : "",
 				critical_range ? critical_range : "");
-	else
-		printf (" | procs=%d;;;0; procs_warn=%d;;;0; procs_crit=%d;;;0;", procs, warn, crit);
-
+        }
+	if (metric == METRIC_RSS){
+		printf (_(" mem_rss is %d"), mem_rss);
+		printf (" | mem_rss=%d;%s;%s;0;", procrss,
+				warning_range ? warning_range : "",
+				critical_range ? critical_range : "");
+        }
 	printf ("\n");
 	return result;
 }
